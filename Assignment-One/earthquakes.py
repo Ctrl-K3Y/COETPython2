@@ -75,20 +75,28 @@ class QuakeData:
                            feature['properties'][key] is not None for key in keys_to_check):
                         coordinates = list(feature['geometry']['coordinates'])
                         if feature['geometry']['type'] == 'Point' and len(coordinates) == 3:
-                            earthquake_data = [feature]
-                            earthquake_data = [feature['properties'][key] for key \
+                            earthquake_data = [feature, coordinates[0], coordinates[1]]
+                            earthquake_data += [feature['properties'][key] for key \
                                             in keys_to_include if key in feature['properties']]
-                            earthquake_data += [coordinates[0], coordinates[1]]
                             included_features.append(tuple(earthquake_data))
         print(included_features)
         self.quake_array = np.array(included_features, dtype=[
-            # ('quake', 'O'),
+            ('quake', 'O'),
+            ('lat', 'float64'),
+            ('long', 'float64'),
             ('magnitude', 'float64'),
             ('felt', 'int32'),
             ('significance', 'int32'),
-            ('lat', 'float64'),
-            ('long', 'float64')
         ])
 
+    def set_location_filter(self, latitude, longitude, distance):
+        quake_array = np.deepcopy(self.quake_array)
+        valid_locations = np.where(calc_distance(quake_array['lat'], quake_array['long'], latitude, longitude) <= distance)
+        return valid_locations
 
+    def set_property_filter(self,magnitude, felt, significance):
+        pass
+
+    def clear_filters(self):
+        pass
 QuakeData(convert_json_to_object())
