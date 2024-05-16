@@ -1,5 +1,6 @@
 from earthquakes import *
 from pathlib import *
+from nphelpers import printnp
 
 
 def start_menu():
@@ -7,6 +8,7 @@ def start_menu():
     print("Welcome to Earthquake Analyzer!")
     filename = input("Please supply a filename to analyze: ")
     geojson = read_json(f"../Data/{filename}")
+    vectorized_data_to_quake_object = np.vectorize(data_to_quake_object())
 
     quake_data = QuakeData(geojson)
     while True:
@@ -15,8 +17,34 @@ def start_menu():
                           "\n (6) Display magnitude stats \n (7) Plot quake map \n (8) Plot magnitude stats \n (9) Quit")
         if selection == "1":
             prompt_location_input(quake_data)
-        if selection == "2":
+        elif selection == "2":
             prompt_property_input(quake_data)
+        elif selection == "3":
+            quake_data.clear_filters()
+        elif selection == "4":
+            quakes_objects = vectorized_data_to_quake_object(quake_data.get_filtered_array())
+        elif selection == "5":
+            pass
+        elif selection == "6":
+            pass
+        elif selection == "7":
+            pass
+        elif selection == "8":
+            pass
+        elif selection == "9":
+            break
+
+
+def data_to_quake_object(filtered_array):
+    quake_objects = []
+    print(filtered_array)
+    current_quake = filtered_array['quake']
+    time = current_quake['properties']['time']
+    q_type = current_quake['properties']['type']
+    coords = (filtered_array['lat'], filtered_array['long'])
+    quake_objects.append(Quake(filtered_array['magnitude'], time, filtered_array['felt'], filtered_array['significance'],q_type, coords))
+    return quake_objects
+
 
 
 def prompt_location_input(quake_data):
@@ -26,8 +54,19 @@ def prompt_location_input(quake_data):
 
     quake_data.set_location_filter(latitude, longitude, distance)
 
+
 def prompt_property_input(quake_data):
-    pass
+
+    print("Please supply a minimum of one argument for this operation")
+    magnitude = input("Please supply the magnitude: ")
+    felt = input("Please supply the felt: ")
+    significance = input("Please supply the significance: ")
+
+    if all(arg is None for arg in [magnitude, felt, significance]):
+        print("WARNING: A single argument is required for this operation")
+
+    quake_data.property_filter(magnitude, felt, significance)
+
 
 def read_json(filepath="../Data/earthquakes.geojson"):
     filepath = Path(filepath)
@@ -42,4 +81,8 @@ def read_json(filepath="../Data/earthquakes.geojson"):
     return geojson
 
 
-start_menu()
+# start_menu()
+vectorized_data_to_quake_object = np.vectorize(data_to_quake_object)
+geojson = read_json()
+qd = QuakeData(geojson)
+qd_objects = vectorized_data_to_quake_object(qd.get_filtered_array())
