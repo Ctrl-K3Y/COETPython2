@@ -6,6 +6,7 @@
 import math
 from nphelpers import printnp
 import numpy as np
+import copy
 from pathlib import *
 import json
 
@@ -15,10 +16,6 @@ import json
 def calc_distance(lat1, long1, lat2, long2):
     """Calculates the distance between two points"""
     earth_radius = 6371e3
-    lat1 = float(lat1)
-    lat2 = float(lat2)
-    long1 = float(long1)
-    long2 = float(long2)
 
     first_lat_rad = lat1 * math.pi / 180
     second_lat_rad = lat2 * math.pi / 180
@@ -33,13 +30,7 @@ def calc_distance(lat1, long1, lat2, long2):
     return (earth_radius * angular_distance_rad) * 1000
 
 
-def convert_json_to_object(filepath="../Data/earthquakes.geojson"):
-    filepath = Path(filepath)
-    if filepath.exists():
-        geojson = json.loads(filepath.read_text())
-    else:
-        geojson = {}
-    return geojson
+
 
 
 # convert_json_to_object("../Data/earthquakes.geojson") - REMOVE
@@ -62,6 +53,7 @@ def convert_json_to_object(filepath="../Data/earthquakes.geojson"):
 # following fields: quake(object), magnitude(float), felt(int32), significance(int32), lat(float),
 # long(float)
 
+
 class QuakeData:
 
     def __init__(self, geojson):
@@ -77,9 +69,8 @@ class QuakeData:
                         if feature['geometry']['type'] == 'Point' and len(coordinates) == 3:
                             earthquake_data = [feature, coordinates[0], coordinates[1]]
                             earthquake_data += [feature['properties'][key] for key \
-                                            in keys_to_include if key in feature['properties']]
+                                                in keys_to_include if key in feature['properties']]
                             included_features.append(tuple(earthquake_data))
-        print(included_features)
         self.quake_array = np.array(included_features, dtype=[
             ('quake', 'O'),
             ('lat', 'float64'),
@@ -88,15 +79,69 @@ class QuakeData:
             ('felt', 'int32'),
             ('significance', 'int32'),
         ])
+        self.vectorized_distance_calculation = np.vectorize(calc_distance)
+        self.location_filter = self.quake_array is not None
+        self.property_filter = self.quake_array is not None
+        self.filtered_array = np.copy(self.quake_array)
 
     def set_location_filter(self, latitude, longitude, distance):
-        quake_array = np.deepcopy(self.quake_array)
-        valid_locations = np.where(calc_distance(quake_array['lat'], quake_array['long'], latitude, longitude) <= distance)
-        return valid_locations
+        quake_filter = self.vectorized_distance_calculation(self.quake_array['lat'], self.quake_array['long'], latitude,
+                                                            longitude) <= distance
+        self.location_filter = quake_filter
+        print("Location filter set")
 
-    def set_property_filter(self,magnitude, felt, significance):
-        pass
+    def set_property_filter(self, magnitude=None, felt=None, significance=None):
+        relevant_parameters = []
+        try:
+            relevant_parameters = {args: arg_value for args, arg_value in \
+                                   zip(['magnitude', 'felt', 'significance'], [magnitude, felt, significance]) if
+                                   arg_value is not None}  # TODO: Document what zip does
+            if len(relevant_parameters) == 0:
+                raise ValueError("At least one parameter must be supplied")
+        except ValueError as e:
+            print(f"Error occurred: {e}")
+        quake_filter = self.quake_array is not None
+        for key, value in relevant_parameters.items():
+            quake_filter &= (self.quake_array[key] == value)
+        self.property_filter = quake_filter
+        print("Property filter set")
 
     def clear_filters(self):
-        pass
-QuakeData(convert_json_to_object())
+        self.filtered_array = np.copy(self.quake_array)
+
+    def get_filtered_array(self):
+        self.filtered_array = self.quake_array[self.property_filter & self.location_filter]
+        return self.filtered_array
+
+    def get_filtered_list(self):
+        self.filtered_array = self.quake_array[self.property_filter & self.location_filter]
+        return self.filtered_array.tolist()
+
+
+class Quake():
+    def __init__(self, magnitude, time, felt, significance, q_type, coords):
+        self.magnitude = magnitude
+        self.time = time
+        self.felt = felt
+        self.significance = significance
+        self.q_type = q_type
+        self.coords = coords
+        self.vectorized_distance_calculation = np.vectorize(calc_distance)
+
+    def __str__(self):
+        return f"{self.magnitude} Magnitude Earthquake, {self.significance} Significance, felt by {self.felt} people in {self.coords[0]}, {self.coords[0]}"
+
+    def get_distance_from(self, latitude, longitude):
+        return self.vectorized_distance_calculation(self.coords[0], self.coords[1], latitude,
+                                                    longitude)
+
+
+# qd = QuakeData(convert_json_to_object())
+# qd.set_location_filter(-90.9175, 13.8163, 100000000)
+# qd.set_property_filter(felt=2, significance=285)
+#
+# printnp(qd.get_filtered_array())
+
+# -77.5153333333333, 37.7101666666667, 2000
+#-90.9175, 13.8163,
+# qd.set_location_filter(-90.9175, 13.8163, 100000000)
