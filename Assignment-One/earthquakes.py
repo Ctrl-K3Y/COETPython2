@@ -92,33 +92,39 @@ class QuakeData:
 
     def set_property_filter(self, magnitude=None, felt=None, significance=None):
         relevant_parameters = []
+        property_set_status = ""
+
         try:
             relevant_parameters = {args: arg_value for args, arg_value in \
                                    zip(['magnitude', 'felt', 'significance'], [magnitude, felt, significance]) if
                                    arg_value is not None}  # TODO: Document what zip does
             if len(relevant_parameters) == 0:
-                raise ValueError("At least one parameter must be supplied")
+                raise ValueError("Property could not be set, at least one parameter must be specified")
         except ValueError as e:
-            print(f"Error occurred: {e}")
+            print(f"[ValueError]: {e}")
+            return
+        print(relevant_parameters)
         quake_filter = self.quake_array is not None
         for key, value in relevant_parameters.items():
             quake_filter &= (self.quake_array[key] == value)
         self.property_filter = quake_filter
-        print("Property filter set")
 
     def clear_filters(self):
         self.filtered_array = np.copy(self.quake_array)
+        self.location_filter = self.quake_array is not None
+        self.property_filter = self.quake_array is not None
 
     def get_filtered_array(self):
-        self.filtered_array = self.quake_array[self.property_filter & self.location_filter]
+        self.filtered_array = self.quake_array[(self.property_filter & self.location_filter)]
+        if self.filtered_array.size > 0 and isinstance(self.filtered_array[0], np.ndarray):
+            self.filtered_array = self.filtered_array[0]
         return self.filtered_array
 
     def get_filtered_list(self):
-        self.filtered_array = self.quake_array[self.property_filter & self.location_filter]
-        return self.filtered_array.tolist()
+        return self.get_filtered_array().tolist()
 
 
-class Quake():
+class Quake:
     def __init__(self, magnitude, time, felt, significance, q_type, coords):
         self.magnitude = magnitude
         self.time = time
