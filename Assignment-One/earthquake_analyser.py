@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from earthquakes import *
 from pathlib import *
 import json
+import sys
 """
 Filename: earthquakes_analyser.py
 Assignment: COET 295 Assignment 1
@@ -10,20 +11,15 @@ Instructors: Wade Lahoda, Bryce Barrie
 Date: 2024-05-14
 """
 
-def start_menu():
-    """
-        Main menu function used to display earthquake data menu
-    """
-    print("Welcome to Earthquake Analyser!")
-    filename = input("Please supply a filename to analyze (optional): ")
-    geojson = read_json(filename) if len(filename) != 0 else read_json()
 
-    quake_data = QuakeData(geojson)
+def start_menu(quake_data):
+    """ Main menu function used to display earthquake data menu to the user"""
     while True:
-        selection = input("\n\t\t\t\t\t----[Menu]---- \n (1) Set location filter \t (5) Display exceptional quakes"
+        selection = input("\n\t\t\t----[Menu]---- \n (1) Set location filter \t (5) Display exceptional quakes"
                           " \n (2) Set property filter \t (6) Display magnitude stats "
-                          "\n (3) Clear filters \t\t\t (7) Plot quake map "
+                          "\n (3) Clear filters \t\t (7) Plot quake map "
                           "\n (4) Display Quakes \t\t (8) Plot magnitude stats \n (9) Quit \n\n Choose Option: ")
+        selection = selection.strip(" \t\n\r")
         if selection == "1":
             prompt_location_input(quake_data)
         elif selection == "2":
@@ -31,26 +27,28 @@ def start_menu():
         elif selection == "3":
             quake_data.clear_filters()
         elif selection == "4":
-            print("\n\t\t\t----[Displaying Earthquakes]----")
+            print("\n\t\t----[Displaying Earthquakes]----")
             display_quake_data(quake_data.get_filtered_array())
         elif selection == "5":
             print("\n\t\t----[Displaying Exceptional Earthquakes]----")
             display_exceptional_quakes(quake_data.get_filtered_array())
         elif selection == "6":
-            print("\n\t\t\t----[Displaying Magnitude Statistics]----")
+            print("\n\t\t----[Displaying Magnitude Statistics]----")
             display_magnitude_stats(quake_data.get_filtered_array())
         elif selection == "7":
             print("\n\t\t----[Loading Earthquake Scatter Map]----")
-            display_quake_map(quake_data.get_filtered_array())
+            plot_quake_map(quake_data.get_filtered_array())
         elif selection == "8":
-            print("\n\t\t\t----[Loading Earthquake Magnitude Chart]----")
-            display_magnitude_chart(quake_data.get_filtered_array())
+            print("\n\t\t----[Loading Earthquake Magnitude Chart]----")
+            plot_magnitude_chart(quake_data.get_filtered_array())
         elif selection == "9":
-            print("Thank you for using Earthquake Analyser! Goodbye!")
+            print("\nThank you for using Earthquake Analyser! Goodbye!")
             break
+        else:
+            print("\n[!] Invalid selection. Please try again [!]")
 
 
-def display_magnitude_chart(quake_array):
+def plot_magnitude_chart(quake_array):
     """Creates a chart that shows the number of quakes with whole number magnitudes"""
     whole_numbered_mags = (quake_array[((quake_array['magnitude'] % 1) == 0)])['magnitude']
     categories = np.unique(whole_numbered_mags)
@@ -62,7 +60,7 @@ def display_magnitude_chart(quake_array):
     plt.show()
 
 
-def display_quake_map(quake_array):
+def plot_quake_map(quake_array):
     """ Create a scatter map which shows where """
     plt.figure(figsize=(10, 6))
     plt.scatter(quake_array['lat'], quake_array['long'], np.power(quake_array['magnitude'],2),c='r')
@@ -91,10 +89,9 @@ def display_exceptional_quakes(quake_array):
     """
         Determines all the quakes with magnitudes that are
         above one standard deviation of the data's mean
-    :param quake_array : numpy.ndarray
     """
     if len(quake_array) == 0:
-        print("ERROR: Cannot perform calculations on an empty array")
+        print("[!] Cannot perform calculations on an empty array [!]")
         return
 
     mean_of_magnitudes = np.mean(quake_array['magnitude'])
@@ -108,23 +105,21 @@ def display_quake_data(quake_array):
     """
         Goes through each quakes in the quake array converting them
         to objects and displaying them
-    :param quake_array: numpy.ndarray
     """
     quake_objects = []
     if quake_array.size == 0:
-        print("ERROR: Cannot display empty array")
-    else:
-        for quake in quake_array:
-            quake_objects.append(data_to_quake_object(quake))
-        for obj in quake_objects:
-            print(obj.__str__())
+        print("[!] Nothing to display, Filtered data is empty [!]")
+        return
+
+    for quake in quake_array:
+        quake_objects.append(data_to_quake_object(quake))
+    for obj in quake_objects:
+        print(obj.__str__())
 
 
 def data_to_quake_object(quake):
     """
         Converts the given quake data into a Quake object
-    :param quake: tuple
-    :return: Quake
     """
     current_quake = quake['quake']
     time = current_quake['properties']['time']
@@ -137,20 +132,20 @@ def prompt_location_input(quake_data):
     """
         Prompts the user for latitude, longitude, and distance criteria to
         apply as location filter to apply to the existing quake data
-    :param quake_data: numpy.ndarray
     """
     latitude = input("Please supply a latitude: ")
     longitude = input("Please supply a longitude: ")
     distance = input("Please supply a distance to compare: ")
-
-    quake_data.set_location_filter(latitude, longitude, distance)
+    try:
+        quake_data.set_location_filter(float(latitude), float(longitude), float(distance))
+    except ValueError as err:
+        print(f"[ValueError]: {err}")
 
 
 def prompt_property_input(quake_data):
     """
         Prompts the user for a magnitude, felt, and significance criteria
         to apply as property filter to the existing
-    :param quake_data:
     """
     print("Please supply a minimum of one argument for this operation")
     magnitude = input("Please supply the magnitude: ")
@@ -162,7 +157,7 @@ def prompt_property_input(quake_data):
                  int(significance) if len(significance) != 0 else None)
 
     if all(arg is None for arg in list(arguments)):
-        print("WARNING: A single argument is required for this operation, you provided 0")
+        print("!WARNING: A single argument is required for this operation, you provided 0")
 
     quake_data.set_property_filter(*arguments)
 
@@ -170,8 +165,6 @@ def prompt_property_input(quake_data):
 def read_json(filepath="earthquakes.geojson"):
     """
         Reads data from the given file if it exists else an error will be raised
-    :param filepath: str
-    :return: geojson : dict
     """
     filepath = Path(f"../Data/{filepath}")
     geojson = {}
@@ -184,5 +177,12 @@ def read_json(filepath="earthquakes.geojson"):
         raise FileExistsError("File supplied does not exist!")
     return geojson
 
+print("----------------Welcome to Earthquake Analyser!----------------")
+print("Please supply a filename to analyze (optional): ")
 
-start_menu()
+filename = sys.stdin.readline().strip()
+print(f"FILE CHOSEN: {filename}")
+geojson = read_json(filename) if len(filename) != 0 else read_json()
+quake_data = QuakeData(geojson)
+
+start_menu(quake_data)

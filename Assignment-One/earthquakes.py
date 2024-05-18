@@ -10,23 +10,6 @@ Date: 2024-05-14
 """
 
 
-def calc_distance(lat1, long1, lat2, long2):
-    """Calculates the distance between two points using haversine law"""
-    earth_radius = 6371e3
-
-    first_lat_rad = lat1 * math.pi / 180
-    second_lat_rad = lat2 * math.pi / 180
-    delta_latitude_rad = (lat2 - lat1) * math.pi / 180
-    delta_longitude_rad = (long2 - long1) * math.pi / 180
-
-    square_of_half_chord = math.sin(delta_latitude_rad / 2) * math.sin(delta_latitude_rad / 2) + \
-                           math.cos(first_lat_rad) * math.cos(second_lat_rad) * \
-                           math.sin(delta_longitude_rad / 2) * math.sin(delta_longitude_rad)
-    angular_distance_rad = 2 * math.atan2(math.sqrt(square_of_half_chord), math.sqrt(1 - square_of_half_chord))
-
-    return (earth_radius * angular_distance_rad) * 1000
-
-
 class QuakeData:
     """A class used to represent earthquake information extracted from a file"""
 
@@ -68,17 +51,9 @@ class QuakeData:
             Sets a location filter to narrow earthquake data to only the earthquakes within the specified
             distance of the coordinates
         """
-        try:
-            relevant_parameters = {float(arg_value) for arg_value in (latitude, longitude, distance) if
-                                   arg_value is not None}
-            if len(relevant_parameters) != 3:
-                raise ValueError("Location filter ")
-        except ValueError as e:
-            print(f"[ValueError]: {e}")
-            return
         quake_filter = self.vectorized_distance_calculation(self.quake_array['lat'],
-                                                            self.quake_array['long'], float(latitude),
-                                                            float(longitude)) <= float(distance)
+                                                            self.quake_array['long'], latitude,
+                                                            longitude) <= distance
         self.location_filter = quake_filter
         print("\n\t\t\t----[Location filter has been applied]----")
 
@@ -149,9 +124,26 @@ class Quake:
 
     def __str__(self):
         """ Returns a string formatted with quake data """
-        return f"{self.magnitude} Magnitude Earthquake, {self.significance} Significance, felt by {self.felt} people in {self.coords[0]}, {self.coords[0]}"
+        return f"{self.magnitude} Magnitude Earthquake, {self.significance} Significance, felt by {self.felt} people in {self.coords[0]}, {self.coords[1]}"
 
     def get_distance_from(self, latitude, longitude):
         """ Returns the distance of quake from the coordinates specified """
         return self.vectorized_distance_calculation(self.coords[0], self.coords[1], latitude,
                                                     longitude)
+
+
+def calc_distance(lat1, long1, lat2, long2):
+    """Calculates the distance between two points using haversine law"""
+    earth_radius = 6371e3
+
+    first_lat_rad = lat1 * math.pi / 180
+    second_lat_rad = lat2 * math.pi / 180
+    delta_latitude_rad = (lat2 - lat1) * math.pi / 180
+    delta_longitude_rad = (long2 - long1) * math.pi / 180
+
+    square_of_half_chord = math.sin(delta_latitude_rad / 2) * math.sin(delta_latitude_rad / 2) + \
+                           math.cos(first_lat_rad) * math.cos(second_lat_rad) * \
+                           math.sin(delta_longitude_rad / 2) * math.sin(delta_longitude_rad)
+    angular_distance_rad = 2 * math.atan2(math.sqrt(square_of_half_chord), math.sqrt(1 - square_of_half_chord))
+
+    return (earth_radius * angular_distance_rad) * 1000
