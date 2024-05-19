@@ -28,7 +28,9 @@ class QuakeData:
                            feature['properties'][key] is not None for key in keys_to_check):
                         coordinates = list(feature['geometry']['coordinates'])
                         if feature['geometry']['type'] == 'Point' and len(coordinates) == 3:
-                            earthquake_data = [feature, coordinates[0], coordinates[1]]
+                            new_quake = Quake(feature['properties']['mag'], feature['properties']['time'], feature['properties']['felt'],
+                                              feature['properties']['sig'],feature['properties']['type'],(coordinates[0], coordinates[1]))
+                            earthquake_data = [new_quake, coordinates[0], coordinates[1]]
                             earthquake_data += [feature['properties'][key] for key \
                                                 in keys_to_include if key in feature['properties']]
                             included_features.append(tuple(earthquake_data))

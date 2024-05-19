@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from earthquakes import *
 from pathlib import *
+import numpy as np
 import json
 import sys
 """
@@ -106,26 +107,13 @@ def display_quake_data(quake_array):
         Goes through each quakes in the quake array converting them
         to objects and displaying them
     """
-    quake_objects = []
     if quake_array.size == 0:
         print("[!] Nothing to display, Filtered data is empty [!]")
         return
-
     for quake in quake_array:
-        quake_objects.append(data_to_quake_object(quake))
-    for obj in quake_objects:
-        print(obj.__str__())
+        print(quake['quake'].__str__())
 
 
-def data_to_quake_object(quake):
-    """
-        Converts the given quake data into a Quake object
-    """
-    current_quake = quake['quake']
-    time = current_quake['properties']['time']
-    q_type = current_quake['properties']['type']
-    coords = (quake['lat'], quake['long'])
-    return Quake(quake['magnitude'], time, quake['felt'], quake['significance'], q_type, coords)
 
 
 def prompt_location_input(quake_data):
