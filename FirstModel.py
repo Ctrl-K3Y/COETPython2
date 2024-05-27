@@ -12,7 +12,7 @@ def acc_chart(results):
     plt.pyplot.xlabel("epoch")
     plt.pyplot.plot(results.history['accuracy'])
     plt.pyplot.plot(results.history['val_accuracy'])
-    plt.pyplot.legend(["train","test"], loc="upperleft")
+    plt.pyplot.legend(["train","test"], loc="upper left")
     plt.pyplot.show()
 
 def loss_chart(results):
@@ -21,7 +21,7 @@ def loss_chart(results):
     plt.pyplot.xlabel("epoch")
     plt.pyplot.plot(results.history['loss'])
     plt.pyplot.plot(results.history['val_loss'])
-    plt.pyplot.legend(["train","test"], loc="upperleft")
+    plt.pyplot.legend(["train","test"], loc="upper left")
     plt.pyplot.show()
 
 df = pd.read_csv("Data/kc_house_data.csv")
@@ -60,7 +60,7 @@ for i,j in enumerate(df['yr_renovated']): # Goes thorugh all the values in yr re
 
 df.drop(["date","yr_built","yr_renovated","reg_year"], axis=1, inplace=True)
 df.drop(["zipcode","lat","long","id"], axis=1, inplace=True)
-df.drop(['house_age','sqft_lot15','condition','sqft_lot'], axis=1, inPlace=True)
+df.drop(['house_age','sqft_lot15','condition','sqft_lot'], axis=1, inplace=True)
 
 # print(df.dtypes)
 # print(df.head().to_string())

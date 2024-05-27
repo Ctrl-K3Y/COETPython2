@@ -94,7 +94,7 @@ dfCopy['sex'] = dfCopy['sex'].map({1: "Male", 0: "Female"})
 print(dfCopy.head().to_string())
 
 # Call to do_graph_stuff
-#do_graph_stuff(dfCopy)
+do_graph_stuff(dfCopy)
 
 
 # Now we want to go back to the Main dfHeart, not the copy and remove the outliers
