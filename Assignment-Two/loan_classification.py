@@ -81,8 +81,9 @@ Y = copied_loan_df['loan_status']
 loan_model = keras.Sequential()
 loan_model.add(keras.layers.Dense( 13,activation='relu'))
 loan_model.add(keras.layers.Dense( 6, activation='relu'))
-loan_model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
-result = loan_model.fit(X,Y, validation_split=0.22, batch_size=10, epochs=70)
+loan_model.add(keras.layers.Dense( 1, activation='sigmoid'))
+loan_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+result = loan_model.fit(X,Y, validation_split=0.33, batch_size=10, epochs=70)
 acc_chart(result)
 loss_chart(result)
 

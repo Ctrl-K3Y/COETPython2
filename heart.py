@@ -121,7 +121,7 @@ model = models.Sequential()
 
 # Two Layer Models
 # - Input layer Model
-model.add(layers.Dense(13, activation='relu'))
+model.add(layers.Dense(11, activation='relu',input_dim=13))
 # - Output Layer Model
 model.add(layers.Dense(1, activation='sigmoid'))
 

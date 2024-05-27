@@ -33,21 +33,20 @@ def loss_chart(results):
     plt.show()
 crop_df = pd.read_csv('../Data/Crop_Recommendation.csv',index_col=False)
 copied_crop_df = crop_df.copy()
-copied_crop_df['Crop'] = copied_crop_df['Crop'].map({'Apple': 1, 'Banana': 2, 'Blackgram': 3, 'ChickPea': 4, 'Coconut': 5, 'Coffee': 6, 'Cotton': 7,
-                                             'Grapes': 8, 'Jute': 9, 'KidneyBeans': 10, 'Lentil': 11, 'Maize': 12, 'Mango': 13, 'MothBeans': 14,
-                                             'MungBean': 15, 'Muskmelon': 16,
-                                             'Orange': 17, 'Papaya': 18, 'PigeonPeas': 19, 'Pomegranate': 20, 'Rice': 21, 'Watermelon': 22})
+# copied_crop_df.drop(columns=['Crop'],axis=1, inplace=True)
+copied_crop_df['Crop'] = copied_crop_df['Crop'].map({'Apple': 0, 'Banana': 1, 'Blackgram': 2, 'ChickPea': 3, 'Coconut': 4, 'Coffee': 5, 'Cotton': 6,
+                                             'Grapes': 7, 'Jute': 8, 'KidneyBeans': 9, 'Lentil': 10, 'Maize': 11, 'Mango': 12, 'MothBeans': 13,
+                                             'MungBean': 14, 'Muskmelon': 15,
+                                             'Orange': 16, 'Papaya': 17, 'PigeonPeas': 18, 'Pomegranate': 19, 'Rice': 20, 'Watermelon': 21})
 X = copied_crop_df.drop(["Crop"], axis=1)
 Y = copied_crop_df["Crop"]
 
-
+# Nitrogen,Phosphorus,Potassium,Temperature,Humidity,pH_Value,Rainfall,Crop
 crop_model = keras.Sequential()
-crop_model.add(layers.Dense(25, activation='relu'))
-crop_model.add(layers.Dropout(0.4))
+crop_model.add(layers.Dense(32, activation='relu', input_dim=7))
 crop_model.add(layers.Dense(16, activation='relu'))
-crop_model.add(layers.BatchNormalization())
-crop_model.add(layers.Dense(14, activation='relu'))
-crop_model.compile(optimizer='adam', loss='mse',  metrics=['accuracy'])
-results = crop_model.fit(X, Y, validation_split=0.33, batch_size=30, epochs=80)
+crop_model.add(layers.Dense(22, activation="softmax")) # better for this situation
+crop_model.compile(optimizer='adam', loss=keras.losses.sparse_categorical_crossentropy,  metrics=['accuracy'])
+results = crop_model.fit(X, Y, validation_split=0.22, batch_size=100, epochs=150)
 acc_chart(results)
 loss_chart(results)
